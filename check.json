@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "label": "логика нод (Python-песочница)",
+      "cmd": "python tests/_test_prompt_logistics.py",
+      "expect": [
+        "FAIL: 0",
+        "ТЕСТ ПРОЙДЕН"
+      ],
+      "description": "все режимы ТЗ: прямой маршрут, LLM, INT до/после LLM, STYLE без дубля ПрМаст, пустые входы, склейка одним пробелом, независимость переключателей, ленивый ПрLLM (LLM не запускается при LLM Prompt OFF), контракт INPUT_TYPES"
+    },
+    {
+      "label": "статический аудит (Nodes 2.0)",
+      "cmd": "node tests/_audit_prompt_logistics.mjs",
+      "expect": [
+        "FAIL: 0",
+        "аудит чист"
+      ],
+      "description": "контракт двух нод, пять переключателей только на главной, финализатор без настроек, ленивый вход ПрLLM (lazy + check_lazy_status + скрытые PROMPT/UNIQUE_ID), отсутствие таймеров/сети/глобального состояния, отсутствие legacy-canvas и JS-зависимостей, check.json и карта папки"
+    }
+  ]
+}
