@@ -1,10 +1,10 @@
 """Prompt logistics — сборка промпта из независимых частей.
 
 Две ноды, потому что ComfyUI отклоняет циклы графа: одна нода не может
-одновременно отдать LLM PROMPT наружу и принять результат LLM обратно.
+одновременно отдать Промпт в LLM наружу и принять результат LLM обратно.
 
   Prompt logistics          — все пять переключателей и все входы; собирает
-                              LLM PROMPT, прямой MODEL PROMPT и надбавку
+                              Промпт в LLM, прямой sys prompt mod и надбавку
                               к результату LLM
   Prompt logistics — MODEL  — без настроек: выбирает результат LLM или прямой
                               промпт и приклеивает надбавку
@@ -30,14 +30,18 @@ def _join(parts):
 
 class PromptLogistics:
     DESCRIPTION = (
-        "Все настройки здесь.\n"
-        "LLM PROMPT = ПрОб [+ INT Prompt при «INT» и «INT в LLM»] "
-        "[+ ПрМаст при «STYLE Prompt» и «STYLE в LLM»].\n"
-        "MODEL PROMPT (прямой) = ПрОб [+ INT Prompt при «INT»] "
-        "[+ ПрМаст при «STYLE Prompt»].\n"
-        "«ДОП к ПрLLM» = то, что добавляется к результату LLM: "
-        "[INT Prompt при «INT» без «INT в LLM»] "
-        "[+ ПрМаст при «STYLE Prompt» и без «STYLE в LLM»].\n"
+        "Все настройки здесь. Входы: «Основной промпт», «Мастер-стиль», "
+        "«Дополн. промпт» — любой дополнительный промпт.\n"
+        "Выход «Промпт в LLM» = основной промпт "
+        "[+ дополн. при «Дополн. промпт» и «Дополн. промпт в LLM»] "
+        "[+ мастер-стиль при «Мастер-стиль» и «Мастер-стиль в LLM»].\n"
+        "Выход «sys prompt mod» = основной промпт "
+        "[+ дополн. при «Дополн. промпт»] [+ мастер-стиль при «Мастер-стиль»].\n"
+        "Выход «sys prompt plus» = то, что добавляется к результату LLM: "
+        "[дополн. при «Дополн. промпт» без «Дополн. промпт в LLM»] "
+        "[+ мастер-стиль при «Мастер-стиль» и без «Мастер-стиль в LLM»].\n"
+        "Порядок выходов: «Промпт в LLM», «sys prompt mod», "
+        "«sys prompt plus», «sys use LLM».\n"
         "Подключите выходы к LLM и к ноде «Prompt logistics — MODEL»."
     )
 
@@ -49,63 +53,73 @@ class PromptLogistics:
                 "prompt": ("STRING", {
                     "forceInput": True,
                     "multiline": True,
-                    "display_name": "ПрОб",
+                    "display_name": "Основной промпт",
                     "tooltip": "Основной промпт: человек/объект, окружение, действие.",
                 }),
                 "master": ("STRING", {
                     "forceInput": True,
                     "multiline": True,
-                    "display_name": "ПрМаст",
-                    "tooltip": "Мастер-промпт: стиль, качество, камера, свет.",
+                    "display_name": "Мастер-стиль",
+                    "tooltip": "Мастер-стиль: стиль, качество, камера, свет. Попадает в "
+                               "итог только при включённом «Мастер-стиль» ниже.",
                 }),
                 "int_prompt": ("STRING", {
                     "forceInput": True,
                     "multiline": True,
-                    "display_name": "INT Prompt",
-                    "tooltip": "Интерьерный промпт: обстановка, мебель, материалы.",
+                    "display_name": "Дополн. промпт",
+                    "tooltip": "Любой дополнительный промпт: обстановка, детали, уточнения, "
+                               "второй объект — что угодно. Куда идёт — решают "
+                               "«Дополн. промпт» и «Дополн. промпт в LLM» ниже.",
                 }),
                 "llm_prompt": ("BOOLEAN", {
                     "default": False,
-                    "display_name": "LLM Prompt",
-                    "tooltip": "В модель идёт результат LLM, а не прямой промпт.",
+                    "display_name": "LLM промпт",
+                    "tooltip": "В модель идёт результат LLM («Промпт из LLM»), а не прямой "
+                               "промпт. При OFF ветка LLM не запускается.",
                 }),
                 "style_prompt": ("BOOLEAN", {
                     "default": False,
-                    "display_name": "STYLE Prompt",
-                    "tooltip": "Главный выключатель ПрМаст: без него стиль "
+                    "display_name": "Мастер-стиль",
+                    "tooltip": "Главный выключатель входа «Мастер-стиль»: без него стиль "
                                "не идёт ни в LLM, ни в итоговый промпт.",
                 }),
                 "style_in_llm": ("BOOLEAN", {
                     "default": False,
-                    "display_name": "STYLE в LLM",
-                    "tooltip": "Куда идёт ПрМаст: в LLM PROMPT (вкл.) или в "
-                               "итоговый промпт (выкл.). Работает только при "
-                               "«STYLE Prompt».",
+                    "display_name": "Мастер-стиль в LLM",
+                    "tooltip": "Куда идёт «Мастер-стиль»: в «Промпт в LLM» (вкл.) или в "
+                               "«sys prompt plus» (выкл.). Работает только при "
+                               "включённом «Мастер-стиль».",
                 }),
                 "use_int": ("BOOLEAN", {
                     "default": False,
-                    "display_name": "INT",
-                    "tooltip": "Участие INT Prompt: в LLM или в промпт модели.",
+                    "display_name": "Дополн. промпт",
+                    "tooltip": "Участие входа «Дополн. промпт»: OFF — дополнительный промпт "
+                               "не используется нигде.",
                 }),
                 "int_in_llm": ("BOOLEAN", {
                     "default": False,
-                    "display_name": "INT в LLM",
-                    "tooltip": "Куда идёт INT Prompt: в LLM (вкл.) или в "
-                               "итоговый промпт (выкл.). Работает только при «INT».",
+                    "display_name": "Дополн. промпт в LLM",
+                    "tooltip": "Куда идёт «Дополн. промпт»: в «Промпт в LLM» (вкл.) или в "
+                               "«sys prompt plus» (выкл.). Работает только при "
+                               "включённом «Дополн. промпт».",
                 }),
             },
         }
 
     RETURN_TYPES = ("STRING", "STRING", "STRING", "BOOLEAN")
-    RETURN_NAMES = ("MODEL PROMPT (прямой)", "LLM PROMPT", "ДОП к ПрLLM", "USE LLM")
+    RETURN_NAMES = ("Промпт в LLM", "sys prompt mod", "sys prompt plus",
+                    "sys use LLM")
     OUTPUT_TOOLTIPS = (
-        "Прямой промпт: ПрОб [+ INT Prompt] [+ ПрМаст]. Подключите к входу "
-        "«MODEL PROMPT (прямой)» ноды «Prompt logistics — MODEL».",
-        "Промпт для внешней LLM: ПрОб [+ INT Prompt при «INT» и «INT в LLM»] "
-        "[+ ПрМаст при «STYLE Prompt» и «STYLE в LLM»].",
-        "Надбавка к результату LLM: INT Prompt и/или ПрМаст. Подключите к "
-        "одноимённому входу ноды «Prompt logistics — MODEL».",
-        "Флаг «LLM Prompt». Подключите к входу «USE LLM» ноды "
+        "Промпт для внешней LLM: основной промпт [+ дополн. при «Дополн. промпт» "
+        "и «Дополн. промпт в LLM»] [+ мастер-стиль при «Мастер-стиль» и "
+        "«Мастер-стиль в LLM»].",
+        "sys prompt mod — прямой промпт: основной промпт [+ дополн. при "
+        "«Дополн. промпт»] [+ мастер-стиль при «Мастер-стиль»]. Подключите к "
+        "входу «sys prompt mod» ноды «Prompt logistics — MODEL».",
+        "sys prompt plus — надбавка к результату LLM: дополн. промпт и/или "
+        "мастер-стиль. Подключите к одноимённому входу ноды "
+        "«Prompt logistics — MODEL».",
+        "sys use LLM — флаг «LLM промпт». Подключите к входу «sys use LLM» ноды "
         "«Prompt logistics — MODEL».",
     )
     FUNCTION = "compose"
@@ -125,18 +139,18 @@ class PromptLogistics:
             int_prompt if (llm_prompt and use_int and not int_in_llm) else None,
             master if (llm_prompt and style_prompt and not style_in_llm) else None,
         ])
-        return (direct, llm, suffix, bool(llm_prompt))
+        return (llm, direct, suffix, bool(llm_prompt))
 
 
 class PromptLogisticsModel:
     DESCRIPTION = (
-        "Итоговый MODEL PROMPT для модели. Настроек нет: все переключатели — "
+        "Итоговый промпт для модели. Настроек нет: все переключатели — "
         "на ноде «Prompt logistics».\n"
-        "«LLM Prompt» выключен: MODEL PROMPT = прямой промпт, а LLM не "
-        "запускается (вход «ПрLLM» ленивый).\n"
-        "«LLM Prompt» включён: MODEL PROMPT = ПрLLM + надбавка (INT Prompt "
-        "и/или ПрМаст).\n"
-        "Пустой ПрLLM не заменяется исходным промптом."
+        "«LLM промпт» выключен: берётся вход «sys prompt mod» (прямой промпт), "
+        "а LLM не запускается (вход «Промпт из LLM» ленивый).\n"
+        "«LLM промпт» включён: берётся «Промпт из LLM» + вход «sys prompt plus» "
+        "(дополн. промпт и/или мастер-стиль).\n"
+        "Пустой «Промпт из LLM» не заменяется исходным промптом."
     )
 
     @classmethod
@@ -148,28 +162,31 @@ class PromptLogisticsModel:
                     "forceInput": True,
                     "multiline": True,
                     "lazy": True,
-                    "display_name": "ПрLLM",
+                    "display_name": "Промпт из LLM",
                     "tooltip": "Результат внешней LLM. Ленивый вход: при "
-                               "выключенном «LLM Prompt» ветка LLM не "
+                               "выключенном «LLM промпт» ветка LLM не "
                                "выполняется.",
                 }),
                 "direct": ("STRING", {
                     "forceInput": True,
                     "multiline": True,
-                    "display_name": "MODEL PROMPT (прямой)",
-                    "tooltip": "Выход «MODEL PROMPT (прямой)» ноды «Prompt logistics».",
+                    "display_name": "sys prompt mod",
+                    "tooltip": "Выход «sys prompt mod» ноды «Prompt logistics»: прямой "
+                               "промпт (без результата LLM).",
                 }),
                 "suffix": ("STRING", {
                     "forceInput": True,
                     "multiline": True,
-                    "display_name": "ДОП к ПрLLM",
-                    "tooltip": "Выход «ДОП к ПрLLM» ноды «Prompt logistics».",
+                    "display_name": "sys prompt plus",
+                    "tooltip": "Выход «sys prompt plus» ноды «Prompt logistics»: что "
+                               "добавить к результату LLM.",
                 }),
                 "use_llm": ("BOOLEAN", {
                     "forceInput": True,
                     "default": False,
-                    "display_name": "USE LLM",
-                    "tooltip": "Выход «USE LLM» ноды «Prompt logistics».",
+                    "display_name": "sys use LLM",
+                    "tooltip": "Выход «sys use LLM» ноды «Prompt logistics»: флаг "
+                               "«LLM промпт» — брать результат LLM или прямой промпт.",
                 }),
             },
             "hidden": {
@@ -179,7 +196,7 @@ class PromptLogisticsModel:
         }
 
     RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("MODEL PROMPT",)
+    RETURN_NAMES = ("Итоговый промпт",)
     OUTPUT_TOOLTIPS = (
         "Итоговый промпт: результат LLM или прямой промпт, плюс надбавка.",
     )
