@@ -214,8 +214,8 @@ check("S: подписи входов", [si["optional"][k][1]["display_name"] fo
 check("S: подписи переключателей",
       [si["optional"][k][1]["display_name"] for k in
        ("llm_prompt", "style_prompt", "style_in_llm", "use_int", "int_in_llm")],
-      ["LLM промпт", "Мастер-стиль", "Мастер-стиль в LLM",
-       "Дополн. промпт", "Дополн. промпт в LLM"])
+      ["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
+       "Дополн. промпт: вкл", "Дополн. промпт в LLM"])
 check("S: переключатели по умолчанию OFF",
       [si["optional"][k][1]["default"] for k in
        ("llm_prompt", "style_prompt", "style_in_llm", "use_int", "int_in_llm")],
@@ -286,12 +286,12 @@ s_widgets = [si["optional"][k][1]["display_name"] for k in si["optional"]
 f_widgets = [fi["optional"][k][1]["display_name"] for k in fi["optional"]
              if fi["optional"][k][0] == "BOOLEAN" and is_widget(fi["optional"][k][1])]
 check("пять переключателей на главной", sorted(s_widgets),
-      sorted(["LLM промпт", "Мастер-стиль", "Мастер-стиль в LLM",
-              "Дополн. промпт", "Дополн. промпт в LLM"]))
+      sorted(["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
+              "Дополн. промпт: вкл", "Дополн. промпт в LLM"]))
 check("финализатор без настроек", f_widgets, [])
 check("всего BOOLEAN-переключателей пять", len(s_widgets) + len(f_widgets), 5)
-for label in ("LLM промпт", "Мастер-стиль", "Мастер-стиль в LLM",
-              "Дополн. промпт", "Дополн. промпт в LLM"):
+for label in ("LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
+              "Дополн. промпт: вкл", "Дополн. промпт в LLM"):
     check(f"{label} ровно один раз", (s_widgets + f_widgets).count(label), 1)
 
 # ── 13. Состав промпта не содержит служебных подписей ─────────────────────
@@ -307,7 +307,10 @@ check("порядок: слот 0 — LLM PROMPT",
       slot_tips[0].startswith("Промпт для внешней LLM"), True)
 check("порядок: слот 1 — sys prompt mod",
       slot_tips[1].startswith("sys prompt mod"), True)
-check("связка: входы MODEL = выходы S (слоты 1..3)",
+check("имя ноды F — SYS",
+      node.NODE_DISPLAY_NAME_MAPPINGS["PromptLogisticsModel"],
+      "Prompt logistics — SYS")
+check("связка: входы SYS = выходы S (слоты 1..3)",
       [x[1]["display_name"] for x in fi["optional"].values()][1:],
       list(node.PromptLogistics.RETURN_NAMES[1:]))
 surface = (str(si) + str(fi) + str(S.RETURN_NAMES) + str(F.RETURN_NAMES)
@@ -315,7 +318,7 @@ surface = (str(si) + str(fi) + str(S.RETURN_NAMES) + str(F.RETURN_NAMES)
            + str(S.DESCRIPTION) + str(F.DESCRIPTION))
 for word in ("ПрОб", "ПрМаст", "ПрLLM", "INT Prompt", "LLM PROMPT",
              "ДОП к ПрLLM", "USE LLM", "MODEL PROMPT (прямой)",
-             "STYLE", "MODEL PROMPT"):
+             "STYLE", "MODEL PROMPT", "— MODEL"):
     check(f"нет старой подписи {word!r}", word in surface, False)
 # INT без «INT в LLM»: в LLM INT не идёт, в прямой промпт идёт — слоты разные.
 check("порядок: compose отдаёт слоты по порядку",

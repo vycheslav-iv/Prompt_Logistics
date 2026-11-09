@@ -53,7 +53,7 @@ if (PY) {
   has(PY, /"PromptLogistics":\s*PromptLogistics/, "python: NODE_CLASS_MAPPINGS S");
   has(PY, /"PromptLogisticsModel":\s*PromptLogisticsModel/, "python: NODE_CLASS_MAPPINGS F");
   has(PY, /"PromptLogistics":\s*"Prompt logistics"/, "python: display name S = Prompt logistics");
-  has(PY, /"PromptLogisticsModel":\s*"Prompt logistics — MODEL"/, "python: display name F");
+  has(PY, /"PromptLogisticsModel":\s*"Prompt logistics — SYS"/, "python: display name F — SYS");
 
   check("python: нет import time/asyncio/threading/multiprocessing",
     !/^\s*(import|from)\s+(time|asyncio|threading|multiprocessing)\b/m.test(PY));
@@ -76,8 +76,8 @@ if (PY) {
   check("python: USE LLM — link-only BOOLEAN, а не виджет",
     /"use_llm":\s*\("BOOLEAN",\s*\{[\s\S]{0,220}?"forceInput":\s*True/.test(PY));
   const esc = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const togLabels = ["LLM промпт", "Мастер-стиль", "Мастер-стиль в LLM",
-                     "Дополн. промпт", "Дополн. промпт в LLM"];
+  const togLabels = ["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
+                     "Дополн. промпт: вкл", "Дополн. промпт в LLM"];
   const togBlock = PY.slice(PY.indexOf('"llm_prompt": ("BOOLEAN"'),
                             PY.indexOf('RETURN_TYPES = ("STRING", "STRING"'));
   const togPos = togLabels.map((n) => togBlock.indexOf(`"display_name": "${n}"`));
@@ -88,7 +88,7 @@ if (PY) {
   check("python: порядок переключателей",
     togPos.every((v, i) => i === 0 || (v > 0 && v > togPos[i - 1])),
     JSON.stringify(togPos));
-  for (const name of ["Основной промпт", "Мастер-стиль", "Дополн. промпт",
+  for (const name of ["Основной промпт", "Мастер-стиль: вкл", "Дополн. промпт: вкл",
                       "Промпт из LLM", "sys prompt mod", "sys prompt plus",
                       "sys use LLM"]) {
     const count = (PY.match(new RegExp(`"display_name":\\s*"${esc(name)}"`, "g")) || []).length;
@@ -171,7 +171,7 @@ console.log("— документация и карта папки —");
 const SPEC = read("SPECIFICATION.md") || "";
 check("SPECIFICATION: описано ограничение цикла",
   /цикл/i.test(SPEC) && /dependency_cycle|отклоня/i.test(SPEC));
-check("SPECIFICATION: две ноды описаны", SPEC.includes("Prompt logistics") && SPEC.includes("Prompt logistics — MODEL"));
+check("SPECIFICATION: две ноды описаны", SPEC.includes("Prompt logistics") && SPEC.includes("Prompt logistics — SYS"));
 check("SPECIFICATION: пять переключателей",
   ["LLM промпт", "Мастер-стиль", "Мастер-стиль в LLM",
    "Дополн. промпт", "Дополн. промпт в LLM"]
@@ -187,6 +187,11 @@ const ROOT_README = read("../README.md") || "";
 const PROJECT_README = read("README.md") || "";
 check("README проекта: порядок выходов — «Промпт в LLM» первым",
   /Выходы \(в этом порядке\): `Промпт в LLM`, `sys prompt mod`/.test(PROJECT_README));
+check("README проекта: имя ноды SYS", PROJECT_README.includes("Prompt logistics — SYS"));
+check("README проекта: переключатели с «вкл»",
+  /Переключатели:[^\n]*`Мастер-стиль: вкл`[^\n]*`Дополн\. промпт: вкл`/.test(PROJECT_README));
+check("доки: старой подписи «— MODEL» нет",
+  !SPEC.includes("— MODEL") && !PROJECT_README.includes("— MODEL"));
 check("README папки: проект в карте", ROOT_README.includes("Prompt_Logistics"));
 check("README папки: у проекта свои проверки",
   new RegExp("`Prompt_Logistics`[^\\n]*check\\.json").test(ROOT_README));
