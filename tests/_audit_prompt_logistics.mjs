@@ -186,6 +186,8 @@ check("SPECIFICATION: ленивый вход «Промпт из LLM» опис
 check("SPECIFICATION: мастер-стиль без дубля описан", /без дубля|не дублир/i.test(SPEC));
 check("SPECIFICATION: выходы в порядке «Промпт в LLM» -> «sys prompt mod»",
   /\| `Промпт в LLM` \|[^\n]*\n\| `sys prompt mod` \|/.test(SPEC));
+check("SPECIFICATION: таблица режимов подписана с «: вкл»",
+  /\| LLM: вкл \|[^\n]*\| Мастер: вкл \|/.test(SPEC));
 check("SPECIFICATION: «Мастер-стиль» — выключатель, «… в LLM» — маршрут",
   /главный выключатель/i.test(SPEC) && /только маршрут/i.test(SPEC));
 const ROOT_README = read("../README.md") || "";
