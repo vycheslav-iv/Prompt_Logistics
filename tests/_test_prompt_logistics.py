@@ -214,8 +214,8 @@ check("S: подписи входов", [si["optional"][k][1]["display_name"] fo
 check("S: подписи переключателей",
       [si["optional"][k][1]["display_name"] for k in
        ("llm_prompt", "style_prompt", "style_in_llm", "use_int", "int_in_llm")],
-      ["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
-       "Дополн. промпт: вкл", "Дополн. промпт в LLM"])
+      ["LLM промпт: вкл", "Мастер-стиль: вкл", "Мастер-стиль в LLM: вкл",
+       "Дополн. промпт: вкл", "Дополн. промпт в LLM: вкл"])
 check("S: переключатели по умолчанию OFF",
       [si["optional"][k][1]["default"] for k in
        ("llm_prompt", "style_prompt", "style_in_llm", "use_int", "int_in_llm")],
@@ -286,13 +286,15 @@ s_widgets = [si["optional"][k][1]["display_name"] for k in si["optional"]
 f_widgets = [fi["optional"][k][1]["display_name"] for k in fi["optional"]
              if fi["optional"][k][0] == "BOOLEAN" and is_widget(fi["optional"][k][1])]
 check("пять переключателей на главной", sorted(s_widgets),
-      sorted(["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
-              "Дополн. промпт: вкл", "Дополн. промпт в LLM"]))
+      sorted(["LLM промпт: вкл", "Мастер-стиль: вкл", "Мастер-стиль в LLM: вкл",
+              "Дополн. промпт: вкл", "Дополн. промпт в LLM: вкл"]))
 check("финализатор без настроек", f_widgets, [])
 check("всего BOOLEAN-переключателей пять", len(s_widgets) + len(f_widgets), 5)
-for label in ("LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
-              "Дополн. промпт: вкл", "Дополн. промпт в LLM"):
+for label in ("LLM промпт: вкл", "Мастер-стиль: вкл", "Мастер-стиль в LLM: вкл",
+              "Дополн. промпт: вкл", "Дополн. промпт в LLM: вкл"):
     check(f"{label} ровно один раз", (s_widgets + f_widgets).count(label), 1)
+check("у каждого переключателя есть «: вкл»",
+      [l for l in s_widgets + f_widgets if not l.endswith(": вкл")], [])
 
 # ── 13. Состав промпта не содержит служебных подписей ─────────────────────
 out = chain(use_int=True, style_prompt=True, llm_result="")[4]

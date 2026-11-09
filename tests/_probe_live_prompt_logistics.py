@@ -121,8 +121,8 @@ def widgets(inputs):
 
 
 check("пять переключателей — виджеты S", sorted(widgets(s_opt)),
-      sorted(["LLM промпт", "Мастер-стиль: вкл", "Мастер-стиль в LLM",
-              "Дополн. промпт: вкл", "Дополн. промпт в LLM"]))
+      sorted(["LLM промпт: вкл", "Мастер-стиль: вкл", "Мастер-стиль в LLM: вкл",
+              "Дополн. промпт: вкл", "Дополн. промпт в LLM: вкл"]))
 check("F без настроек", widgets(f_opt), [])
 check("USE LLM — link-only BOOLEAN", f_opt["use_llm"][1].get("forceInput"), True)
 check("Промпт из LLM помечен lazy (сервер)", f_opt["llm_result"][1].get("lazy"), True)
