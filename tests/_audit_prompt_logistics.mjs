@@ -190,7 +190,21 @@ check("SPECIFICATION: таблица режимов подписана с «: в
   /\| LLM: вкл \|[^\n]*\| Мастер: вкл \|/.test(SPEC));
 check("SPECIFICATION: «Мастер-стиль» — выключатель, «… в LLM» — маршрут",
   /главный выключатель/i.test(SPEC) && /только маршрут/i.test(SPEC));
-const ROOT_README = read("../README.md") || "";
+// Корень рабочей папки: идём вверх, пока не найдём служебную `_process`.
+// Относительный путь «../README.md» после переезда проектов в папку-группу
+// указывал на папку группы, а не на корень — проверки падали ложно.
+const workingRoot = (() => {
+  let dir = ROOT;
+  for (;;) {
+    if (fs.existsSync(path.join(dir, "_process", "check.py"))) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) return ROOT;
+    dir = up;
+  }
+})();
+const ROOT_README = fs.existsSync(path.join(workingRoot, "README.md"))
+  ? fs.readFileSync(path.join(workingRoot, "README.md"), "utf8").replace(/\r\n/g, "\n")
+  : "";
 const PROJECT_README = read("README.md") || "";
 check("README проекта: порядок выходов — «Промпт в LLM» первым",
   /Выходы \(в этом порядке\): `Промпт в LLM`, `sys prompt mod`/.test(PROJECT_README));

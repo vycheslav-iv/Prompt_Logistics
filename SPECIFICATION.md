@@ -179,7 +179,7 @@ check_lazy_status(llm_result, direct, suffix, use_llm, prompt, unique_id):
 
 ## 7. Установка
 
-Исходник: `F:\AI_projects\Custom_node_ComfyUI\Prompt_Logistics\`.
+Исходник: `F:\AI_projects\Work_ComfyUI\Custom_node\Prompt_Logistics\`.
 
 ```bash
 python sync.py Prompt_Logistics
